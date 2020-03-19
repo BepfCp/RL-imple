@@ -1,2 +1,2 @@
 # RL-imple
-My implementation of some reinforcement learning(RL) algorithms
+对于一些经典的强化学习算法的实现
