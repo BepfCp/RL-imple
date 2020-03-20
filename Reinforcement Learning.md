@@ -84,7 +84,7 @@ $$
 利用`Bellman`方程，对于序列$v_0,v_1,v_2,\dots$，我们可以得到更新策略如下：
 $$
 \begin{equation}\begin{aligned}
-v_{k+1} &\doteq \mathbb{E}[R_{t+1}+\gamma v_k(S_{t+1})|S_t=s]\\
+v_{k+1}(s) &\doteq \mathbb{E}[R_{t+1}+\gamma v_k(S_{t+1})|S_t=s]\\
 &= \sum_a\pi(a|s)\sum_{s',r}p(s',r|s,a)[r+\gamma v_k(s')]
 \end{aligned}\end{equation}
 $$
@@ -107,3 +107,25 @@ $$
 #### Policy Iteration
 
 <img src="pic/policy_iteration.png" style="zoom:70%;" />
+
+#### Truncated Policy Iteration
+
+1) Truncated Policy Evaluation
+
+<img src="pic/truncated_policy_evaluation.png" style="zoom:95%;" />
+
+2) Truncated Policy Iteration
+
+![](pic/truncated_policy_iteration.png)
+
+#### Value Iteration
+
+> 实际上，价值更新（Value Iteration）就是把贝尔曼最优方程直接变成了更新规则；也可以将其视作截断策略迭代（Truncated Policy Iteration）的特殊情况：策略评估（Policy Evaluation）对每个状态只做一次交换（sweep）。
+
+$$
+\begin{equation}\begin{aligned}
+v_{k+1}(s) &\doteq \max_a \mathbb{E}[R_{t+1}+\gamma v_k(S_{t+1})|S_t=s,A_t=a]\\
+&= \max_a \sum_{s',r}p(s',r|s,a)[r+\gamma v_k(s')]
+\end{aligned}\end{equation}
+$$
+
