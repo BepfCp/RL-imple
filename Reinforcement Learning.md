@@ -129,3 +129,4 @@ v_{k+1}(s) &\doteq \max_a \mathbb{E}[R_{t+1}+\gamma v_k(S_{t+1})|S_t=s,A_t=a]\\
 \end{aligned}\end{equation}
 $$
 
+<img src="pic/value_iteration.png" style="zoom:80%;" />
