@@ -24,7 +24,7 @@
 
 #### 智能体（agent)-环境交互
 
-![](pic/agent_environment_interface.png)
+<img src="pic/agent_environment_interface.png" style="zoom: 67%;" />
 
 在一个有限马尔可夫决策过程中，状态集、动作集以及奖赏元素都是有限的。
 
@@ -40,12 +40,12 @@ $$
 $$
 G_t \doteq R_{t+1}+R_{t+2}+R_{t+3}+\dots+R_T
 $$
-​	2）折扣回报：
+2）折扣回报：
 $$
 G_t \doteq R_{t+1}+\gamma R_{t+2}+\gamma^2 R_{t+3}+\dots = \sum_{k=0}^\infin \gamma^kR_{t+1+k} = R_{t+1}+\gamma G_{t+1}
 $$
 
-***统一***：将终止状态视作吸收状态，奖赏始终为0，即：
+**统一**：将终止状态视作吸收状态，奖赏始终为0，即：
 
 <img src="pic/absorbing_state.png" style="zoom:67%;" />
 
@@ -103,8 +103,6 @@ $$
 q_*(s,a)=\mathbb{E}[R_{t+1}+\gamma v_*(S_{t+1})|S_t=s,A_t=a]
 $$
 
-
-
 #### `Bellman`方程：
 
 $$
@@ -116,7 +114,13 @@ v_\pi(s) &\doteq \mathbb{E}_\pi[G_t|S_t=s]\\
 \end{aligned}\end{equation}
 $$
 
-
+$$
+\begin{equation}\begin{aligned}
+q_\pi(s,a) &= \mathbb{E}_\pi[R_{t+1}+\gamma v_\pi(S_{t+1})|S_t=s,A_t=a]\\
+&= \sum_{s',r}p(s',r|s,a)[r+\gamma v_\pi(s)] \\
+&= \sum_{s',r}p(s',r|s,a)[r+\gamma\sum_{a'}\pi(a'|s')q(s',a')]
+\end{aligned}\end{equation}
+$$
 
 #### `Bellman`最优方程：
 
@@ -133,13 +137,13 @@ $$
 \begin{equation}\begin{aligned}q_*(s,a) &= \mathbb{E}[R_{t+1}+\gamma \max_{a'}q_*(S_{t+1},a')|S_t=s,A_t=a] \\&= \sum_{s',r}p(s',r|s,a)[r+\gamma \max_{a'}q_*(s',a')]\end{aligned}\end{equation}
 $$
 
-<img src="pic/backup_bellman.png" style="zoom: 80%;" />
+<img src="pic/backup_bellman.png" style="zoom: 70%;" />
 
 直接求解贝尔曼最优方程的困难：
 
 1）环境动态可能不尽知；
 
-2）当前算力不足以应对指数级增长的状态和动作；
+2）当前算力不足以应对指数级增长的状态和状态-动作对；
 
 3）实际问题不满足马尔可夫性
 
@@ -158,7 +162,7 @@ v_{k+1}(s) &\doteq \mathbb{E}[R_{t+1}+\gamma v_k(S_{t+1})|S_t=s]\\
 $$
 算法框图如下（in-place）:
 
-<img src="pic/Iterative Policy Evaluation.png" style="zoom:70%;" />
+<img src="pic/Iterative Policy Evaluation.png" style="zoom:60%;" />
 
 #### Policy Improvement
 
@@ -174,17 +178,17 @@ $$
 
 #### Policy Iteration
 
-<img src="pic/policy_iteration.png" style="zoom:70%;" />
+<img src="pic/policy_iteration.png" style="zoom:60%;" />
 
 #### Truncated Policy Iteration
 
 1) Truncated Policy Evaluation
 
-<img src="pic/truncated_policy_evaluation.png" style="zoom:95%;" />
+<img src="pic/truncated_policy_evaluation.png" style="zoom: 80%;" />
 
 2) Truncated Policy Iteration
 
-![](pic/truncated_policy_iteration.png)
+<img src="pic/truncated_policy_iteration.png" style="zoom:80%;" />
 
 #### Value Iteration
 
@@ -197,7 +201,25 @@ v_{k+1}(s) &\doteq \max_a \mathbb{E}[R_{t+1}+\gamma v_k(S_{t+1})|S_t=s,A_t=a]\\
 \end{aligned}\end{equation}
 $$
 
-<img src="pic/value_iteration.png" style="zoom:80%;" />
+<img src="pic/value_iteration.png" style="zoom:60%;" />
+
+#### 异步动态规划
+
+> 所谓的异步动态规划指的是这么一类算法：即就地（in-place）迭代动态规划，并非系统地对所有状态进行交换（sweep），而是使用任意可用的状态值，以任意顺序来更新状态值。
+
+异步动态规划并不意味着使价值函数收敛所需的算力显著减少。它的重要之处体现在：一方面，能合理避免没有明显价值的迭代，从而把算力集中在更重要的状态更新上；另一方面，是实现在线学习的重要工具。 
+
+#### 广义策略迭代
+
+<img src="pic/GPI.png" style="zoom:70%;" />
+
+可以将广义策略迭代（GPI）视作竞争与合作并存的过程。竞争体现在：策略评估与策略改进这两个子过程是存在矛盾的，因为策略评估会让当前的价值函数与策略更加一致，从而可能会让策略变得不再贪心；而策略改进会让策略本身变得更加贪心，从而价值函数不再完全正确。合作体现在：这两个子过程并非非此即彼的关系，它们的相互作用最终会得到一个最优策略和最优价值函数，从而消除矛盾，如下图所示：
+
+<img src="pic/GPI_process.png" style="zoom:70%;" />
+
+
+
+最后介绍一个概念：**自举**（bootstrapping），即基于后继者的估计之上的估计（针对DP而言）。强化学习中，很多算法都用到了自举。
 
 ## 蒙特卡洛方法
 
