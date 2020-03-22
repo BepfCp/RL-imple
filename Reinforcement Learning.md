@@ -223,3 +223,18 @@ $$
 
 ## 蒙特卡洛方法
 
+蒙特卡洛方法即通过平均采样回报来解决强化学习问题，因此，一般地，蒙特卡洛方法只定义在分幕式任务（episodic task）上。
+
+#### 蒙特卡洛预测
+
+<img src="pic/First-visit_MC.png" style="zoom:60%;" />
+
+Every-visit和First-visit的区别在于：它不需要对$S_t$是否出现在该幕（episode）更早时候。
+
+上面的算法框中描述的算法是用来预测状态值的。如果我们想预测动作值，只需要将相应的状态改为状态-动作对即可。但是这样我们会遇到maintaining exploration的问题，也就是说，不能保证所有动作状态对都能被充分访问到。解决这个问题的方法之一是：采用exploring starts，即将每个动作-状态对以非零概率作为一个episode的起始。当然，更普遍的解决方案是采用stochastic的策略，确保每个动作状态对被选择的概率都不为0，尤其是当智能体是通过实际的交互经验来学习的时候，exploring starts将不能应用。
+
+#### 蒙特卡洛控制
+
+> 即采用蒙特卡洛预测来近似最优策略。
+
+<img src="pic/MonceCarloES.png" style="zoom:60%;" />
