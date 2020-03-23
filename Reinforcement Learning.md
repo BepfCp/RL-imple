@@ -6,19 +6,92 @@
 
 #### 符号表：
 
-|      符号       | 含义                                                         |
-| :-------------: | ------------------------------------------------------------ |
-|  $\mathcal{S}$  | set of all nonterminal states                                |
-| $\mathcal{S}^+$ | set of all states, including the terminal states             |
-|       $T$       | final time step of an episode                                |
-|    $\gamma$     | discount-rate parameter                                      |
-|   $\pi(a|s)$    | probability of taking action $a$ in state $s$ under stochastic policy $\pi$ |
-|  $\mathcal{A}$  | set of actions                                               |
-|  $\mathcal{R}$  | set of all possible rewards, a finite subset of $\mathbb{R}$ |
-|                 |                                                              |
-|                 |                                                              |
+|          符号          | 含义                                                         |
+| :--------------------: | ------------------------------------------------------------ |
+|     $\mathcal{S}$      | set of all nonterminal states                                |
+|    $\mathcal{S}^+$     | set of all states, including the terminal states             |
+|          $T$           | final time step of an episode                                |
+|        $\gamma$        | discount-rate parameter                                      |
+|       $\pi(a|s)$       | probability of taking action $a$ in state $s$ under stochastic policy $\pi$ |
+|     $\mathcal{A}$      | set of actions                                               |
+|     $\mathcal{R}$      | set of all possible rewards, a finite subset of $\mathbb{R}$ |
+|    $\mathcal{T}(s)$    | set of all time steps in which state $s$ is visited in MC    |
+|         $T(t)$         | the first time of termination following time $t$             |
+| $\alpha$,$\alpha_t(a)$ | step size parameter                                          |
+|                        |                                                              |
+
+## 多臂赌博机
+
+#### 动作值方法
+
+1）最简单的做法（sample-average）：
+$$
+Q_t(a) \doteq \frac{\sum_{i=1}^{t-1}R_i\ell_{A_i=a}}{\sum_{i=1}^{t-1}\ell_{A_i=a}}
+$$
+*nonstationary：动作值的改变（the true values of the actions changed over time)*
+
+2）加权平均（exponential recency-weighted average)：
+$$
+Q_{n+1} \doteq  (1-\alpha)^nQ_1+\sum_{i=1}^n\alpha(1-\alpha)^{n-i}R_i
+$$
 
 
+#### 增量式实现
+
+$$
+NewEstimate \leftarrow OldEstimate +StepSize[Target-OldEstimate]
+$$
+
+<img src="pic/simple_bandit_problem.png" style="zoom:60%;" />
+
+#### 跟踪非稳态问题
+
+> 常用的方法之一是采用固定步长。
+
+$$
+Q_{n+1} \doteq Q_n+\alpha[R_n-Q_{n}]
+$$
+
+以概率1收敛的充分条件为：
+$$
+\sum_{n=1}^\infin \alpha_n(a) = \infin\quad\text{and}\quad\sum_{n=1}^\infin \alpha_n(a)^2 < \infin
+$$
+**备注**：第一个条件保证了有无穷多步参与运算，从而消除扰动和初始干扰；第二个条件保证了最终步长会趋于0，即收敛的必要条件。对于固定步长，显然，并不满足第二个条件，但是却能很好的用于非稳态问题中。
+
+#### 乐观初始值
+
+> The downside is that the initial estimates become, in effect, a set of parameters that must be picked by the user, if only to set them all to zero. The upside is that they provide an easy way to supply some prior knowledge about what level of rewards can be expected.
+
+乐观的初始值还能用来鼓励探索。但是这种鼓励只是暂时的，因此对于非稳态问题而言，可能效果并不显著。
+
+#### Upper-Confidence-Bound 动作选择
+
+$$
+A_t \doteq \arg\max_a[Q_t(a)+c\sqrt\frac{\ln t}{N_t(a)}]
+$$
+
+#### 梯度赌博机算法
+
+> Consider learning a numerical preference for each action a , which we denote $H _t ( a )$
+
+$$
+\Pr\{A_t=a\} \doteq \frac{e^{H_t(a)}}{\sum_{b=1}^k e^{H_t(a)}} \doteq \pi_t(a)
+$$
+
+更新规则：
+$$
+H_{t+1}(A_t) \doteq H_t(A_t)+\alpha(R_t-\bar{R}_t)(1-\pi_t(A_t))\quad \text{and}\\
+H_{t+1}(a) \doteq H_t(a)-\alpha(R_t-\bar{R}_t)\pi_t(a)\quad \text{for all }a\neq A_t
+$$
+
+#### Associative Search（Contextual Bandits）
+
+Associative search tasks are intermediate between the k-armed bandit problem and the full reinforcement learning problem. They are like the full reinforcement learning problem in that they involve learning a policy, but like
+our version of the k-armed bandit problem in that each action affects only the immediate reward. If actions are allowed to affect the next situation as well as the reward, then we have the full reinforcement learning problem.
+
+#### Parameter Study
+
+<img src="pic/parameter_study.png" style="zoom:60%;" />
 
 ## 有限马尔可夫决策过程
 
@@ -238,3 +311,73 @@ Every-visit和First-visit的区别在于：它不需要对$S_t$是否出现在�
 > 即采用蒙特卡洛预测来近似最优策略。
 
 <img src="pic/MonceCarloES.png" style="zoom:60%;" />
+
+#### 无探索性起始的蒙特卡洛控制
+
+> On-policy methods attempt to evaluate or improve the policy that is used to make decisions, whereas o↵-policy methods evaluate or improve a policy different from that used to generate the data.
+
+在同轨（on-policy）控制方法中，策略通常是软性的（soft），即$\pi(a|s)>0$，但是会逐渐转变为确定的最优策略。
+
+常用的$\epsilon-soft$策略为$\epsilon-greedy$，即：对于非贪心动作，其被选择的概率为：$\frac{\epsilon}{|\mathcal{A{s}}|}$；而对于贪心动作，其被选择的概率为：$1-\epsilon+\frac{\epsilon}{|\mathcal{A{s}}|}$。
+
+<img src="pic/on-policy_first-visit_MC_control.png" style="zoom:60%;" />
+
+#### 基于重要性采样的离轨预测
+
+> The policy being learned about is called the target policy, and the policy used to generate behavior is called the behavior policy.
+
+由于采样数据依据的策略与学习的策略不同，因此，离轨策略方法通常方差更大，而且收敛更慢；但是，离轨策略方法更为强大。
+
+在预测问题中，我们要求：当$\pi(a|s)>0$时，有$b(a|s)>0$。（收敛假设）
+
+重要性采样率（轨迹为：$A_t,S_{t+1},A_{t+1},\dots,S_T$）：
+$$
+\rho_{t:T-1} \doteq \frac{\prod^{T-1}_{k=t}\pi(A_k|S_k)p(S_{k+1}|S_k,A_k)}{\prod^{T-1}_{k=t}b(A_k|S_k)p(S_{k+1}|S_k,A_k)} = \prod^{T-1}_{k=t}\frac{\pi(A_k|S_k)}{b(A_k|S_k)}
+$$
+因此，我们可以得到，在基于目标策略$\pi$下，状态的价值：
+$$
+\mathbb{E}[\rho_{t:T-1}G_t|S_t=s]=v_\pi(s)
+$$
+即（ordinary importance sampling)：
+$$
+V(s) \doteq \frac{\sum_{t \in \mathcal{T(s)}}\rho_{t:T(t)-1}G_t}{|\mathcal{T}(s)|}
+$$
+另一种做法是采用weighted importance sampling，即（如果分母为0，则状态值为0）：
+$$
+V(s) \doteq \frac{\sum_{t \in \mathcal{T(s)}}\rho_{t:T(t)-1}G_t}{\sum_{t \in \mathcal{T(s)}}\rho_{t:T(t)-1}}
+$$
+对比：ordinary-importance sampling是无偏的，但是方差更大；weighted-importance sampling是有偏的，但是方差更小（first-visit）。
+
+#### 增量式实现
+
+<img src="pic/off-policy_MC_prediction.png" style="zoom:60%;" />
+
+#### Off-policy MC 控制
+
+<img src="pic/off-policy_MC_control.png" style="zoom:60%;" />
+
+## 时序差分学习
+
+#### TD 预测
+
+最简单的TD更新规则：
+$$
+V(S_t) \leftarrow V(S_t)+\alpha[R_{t+1}+\gamma V(S_{t+1})-V(S_t)]
+$$
+<img src="pic/TD0.png" style="zoom:60%;" />
+
+定义TD误差如下：
+$$
+\delta_t \doteq R_{t+1}+\gamma V(S_{t+1})-V(S_t)
+$$
+那么，在假设$V$在整个$G_t$产生的过程中不变（像MC方法中那样），我们可以得到：
+$$
+\begin{equation}\begin{aligned}
+G_t-V(S_t) &= R_{t+1}+\gamma G_{t+1}-V(S_t)+\gamma V(S_{t+1})-\gamma V(S_{t+1})\\
+&= \delta_t+\gamma(G_{t+1}-V(S_{t+1})) \\
+&= \delta_t + \gamma \delta_{t+1}+\gamma^2(G_{t+2}-V(S_{t+2}))\\
+&= \sum_{k=t}^{T-1}\gamma^{k-t}\delta_k
+\end{aligned}\end{equation}
+$$
+当然，实际上在TD(0)中，$V$在$G_t$产生的过程中是不断变化的，不过上面的式子在步长很小的时候仍然近似成立。
+
