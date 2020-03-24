@@ -381,3 +381,10 @@ G_t-V(S_t) &= R_{t+1}+\gamma G_{t+1}-V(S_t)+\gamma V(S_{t+1})-\gamma V(S_{t+1})\
 $$
 当然，实际上在TD(0)中，$V$在$G_t$产生的过程中是不断变化的，不过上面的式子在步长很小的时候仍然近似成立。
 
+#### Sarsa：同轨TD控制
+
+更新规则：
+$$
+Q(S_t,A_t) \leftarrow Q(S_t,A_t)+\alpha[R_{t+1}+\gamma Q(S_{t+1},A_{t+1})-Q(S_t,A_t)]
+$$
+<img src="pic/sarsa.png" style="zoom:60%;" />
