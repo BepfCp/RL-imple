@@ -388,3 +388,20 @@ $$
 Q(S_t,A_t) \leftarrow Q(S_t,A_t)+\alpha[R_{t+1}+\gamma Q(S_{t+1},A_{t+1})-Q(S_t,A_t)]
 $$
 <img src="pic/sarsa.png" style="zoom:60%;" />
+
+#### Q-learning：离轨TD控制
+
+更新规则：
+$$
+Q(S_{t},A_{t}) \leftarrow Q(S_{t},A_{t})+\alpha[R_{t+1}+\gamma \max_a Q(S_{t+1},a)-Q(S_{t}，A_{t})]
+$$
+<img src="pic/Q-learning.png" style="zoom:60%;" />
+
+#### Expected Sarsa
+
+$$
+\begin{equation}\begin{aligned}
+Q(S_t,A_t) &\leftarrow Q(S_t,A_t)+\alpha[R_{t+1}+\gamma\mathbb{E}_\pi[Q(S_{t+1},A_{t+1})|S_{t+1}]-Q(S_t,A_t)] \\
+& \leftarrow Q(S_t,A_t)+\alpha[R_{t+1}+\gamma\sum_a\pi(a|S_{t+1})Q(S_{t+1},a)-Q(S_t,A_t)]
+\end{aligned}\end{equation}
+$$
