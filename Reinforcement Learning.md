@@ -86,8 +86,7 @@ $$
 
 #### Associative Search（Contextual Bandits）
 
-Associative search tasks are intermediate between the k-armed bandit problem and the full reinforcement learning problem. They are like the full reinforcement learning problem in that they involve learning a policy, but like
-our version of the k-armed bandit problem in that each action affects only the immediate reward. If actions are allowed to affect the next situation as well as the reward, then we have the full reinforcement learning problem.
+> Associative search tasks are intermediate between the k-armed bandit problem and the full reinforcement learning problem. They are like the full reinforcement learning problem in that they involve learning a policy, but like our version of the k-armed bandit problem in that each action affects only the immediate reward. If actions are allowed to affect the next situation as well as the reward, then we have the full reinforcement learning problem.
 
 #### Parameter Study
 
@@ -534,3 +533,36 @@ $$
 #### 期望更新和采样更新
 
 <img src="pic/all_one_step_backup.png" style="zoom:60%;" />
+
+#### 轨迹采样
+
+> distribute updates according to the on-policy distribution, that is, according to the distribution observed when following the current policy.
+
+#### 实时动态规划
+
+> Real-time dynamic programming, or RTDP, is an on-policy trajectory-sampling version of the value-iteration algorithm of dynamic programming (DP). In RTDP, the update order is dictated by the order states are visited in real or simulated trajectories.
+
+<img src="pic/RTDP.png" style="zoom:60%;" />
+
+#### 决策时规划
+
+***background planning***: Well before an action is selected for any current state $S_t$ , planning has played a part in improving the table entries, or the mathematical expression, needed to select the action for many states, including $S_t$.
+
+***decision-time planning***: begin and complete it after encountering each new state $S_t$, as a computation whose output is the selection of a single action $A_t$.
+
+#### 启发式搜索
+
+> In heuristic search, for each state encountered, a large tree of possible continuations is considered. The approximate value function is applied to the leaf nodes and then backed up toward the current state at the root.
+
+#### 预演算法
+
+> Rollout algorithms are decision-time planning algorithms based on Monte Carlo control applied to simulated trajectories that all begin at the current environment state. They estimate action values for a given policy by averaging the returns of many simulated trajectories that start with each possible action and then follow the given policy.
+
+#### 蒙特卡洛树搜索
+
+<img src="pic/MCTS.png" style="zoom:60%;" />
+
+<img src="pic/MCTS_algo.png" style="zoom:60%;" />
+
+## 基于函数逼近的同轨策略预测
+
