@@ -566,3 +566,142 @@ $$
 
 ## 基于函数逼近的同轨策略预测
 
+$$
+\hat{v}(s,\mathbf{w}) \approx v_\pi(s)
+$$
+
++ $\hat{v}$ might be a linear function in features of the state, with $\mathbf{w}$ the vector of feature weights;
++ $\hat{v}$ might be the function computed by a multi-layer artificial neural network,with $\mathbf{w}$ the vector of connection weights in all the layers;
++ $\hat{v}$ might be the function computed by a decision tree, where $\mathbf{w}$ is all the numbers defining the split points and leaf values of the tree.
+
+#### 价值函数逼近
+
+定义一次更新的表达形式：
+$$
+s \mapsto u
+$$
+其中，$s$是被更新的状态，$u$是更新目标（target）
+
+#### 预测目标（$\overline{\text{VE}}$)
+
+$$
+\overline{\text{VE}} \doteq \sum_{s \in \mathcal{S}}\mu(s)[v_\pi(s)-\hat{v}(s,\mathbf{w})]^2
+$$
+
+通常$\mu(s)$（state distribution）被选定为花在$s$上的时间，在on-policy下被称作 on-policy distribution.
+
+#### 随机梯度和半梯度方法
+
+$$
+\begin{equation}
+\begin{aligned}
+\mathbf{w}_{t+1} &\doteq \mathbf{w}_t - \frac{1}{2}\alpha\nabla[v_\pi(S_t)-\hat{v}(S_t,\mathbf{w}_t)]^2\\
+&= \mathbf{w}_t + \alpha[v_\pi(S_t)-\hat{v}(S_t,\mathbf{w}_t)]\nabla \hat{v}(S_t,\mathbf{w}_t)
+\end{aligned}
+\end{equation}
+$$
+
+如何更新目标并非$v_\pi(S_t)$，而是它的一个无偏估计$U_t$，那么我们可以得到的更新规则如下：
+$$
+\begin{equation}
+\mathbf{w}_{t+1} \doteq \mathbf{w}_t + \alpha[U_t-\hat{v}(S_t,\mathbf{w}_t)]\nabla \hat{v}(S_t,\mathbf{w}_t) \label{sgd}
+\end{equation}
+$$
+对于标量函数$f$，我们有：
+$$
+\nabla f(\mathbf{w}) \doteq (\frac{\part f(\mathbf{w})}{\part w_1},\frac{\part f(\mathbf{w})}{\part w_2},\dots,\frac{\part f(\mathbf{w})}{\part w_d})^\top
+$$
+<img src="pic/Gradient_Monte_Carlo.png" style="zoom:60%;" />
+
+如果$U_t$是有偏的，并且含有参数$\mathbf{w}_t$，比如TD(0)，那么上述更新规则被称为半梯度方法。
+
+<img src="pic/semi-gradient_TD0.png" style="zoom:60%;" />
+
+状态聚合（state aggregation）：
+
+> **State aggregation** is a simple form of generalizing function approximation in which states are grouped together, with one estimated value (one component of the weight vector $\mathbf{w}$ ) for each group. The value of a state is estimated as its group’s component, and when the state is updated, that component alone is updated. State aggregation is a special case of SGD$(\ref{sgd})$ in which the gradient, $\nabla\hat{v}(S_t,\mathbf{w}_t)$, is 1 for $S_t$ ’s group’s component and 0 for the other components.
+
+#### 线性方法
+
+> In the linear case there is only one optimum (or, in degenerate cases, one set of equally good optima), and thus any method that is guaranteed to converge to or near a local optimum is automatically guaranteed to converge to or near the global optimum.
+
+$$
+\hat{v}(s,\mathbf{w}) \doteq \mathbf{w}^\top \mathbf{x}(s) \doteq \sum_{i=1}^dw_ix_i(s)
+$$
+
+从而更新规则为：
+$$
+\begin{equation}
+\mathbf{w}_{t+1} \doteq \mathbf{w}_t + \alpha[U_t-\hat{v}(S_t,\mathbf{w}_t)] \mathbf{x}(S_t) 
+\end{equation}
+$$
+对于TD(0)，重写更新规则如下：
+$$
+\begin{equation}
+\begin{aligned}
+\mathbf{w}_{t+1} &\doteq \mathbf{w}_t + \alpha[R_{t+1}+\gamma \mathbf{w}_t^\top\mathbf{x}_{t+1}-\mathbf{w}_t^\top\mathbf{x}_t] \mathbf{x}_t \\
+&= \mathbf{w}_t + \alpha(R_{t+1}\mathbf{x}_t-\mathbf{x}_t(\mathbf{x}_t-\gamma \mathbf{x}_{t+1})^\top\mathbf{w}_t) 
+\end{aligned}
+\end{equation}
+$$
+其中：$\mathbf{x}_t = \mathbf{x}(S_t)$. 令$\mathbf{b}=\mathbb{E}[R_{t+1}\mathbf{x}_t]$, $A = \mathbf{E}[\mathbf{x}_t(\mathbf{x}_t-\gamma \mathbf{x}_{t+1})^\top]$， 则：
+$$
+\mathbb{E}[\mathbf{w}_{t+1}|\mathbf{w}_t] = \mathbf{w}_t + \alpha(\mathbf{b-Aw}_t)
+$$
+从而：
+$$
+\mathbf{w}_{\text{TD}} = \mathbf{A}^{-1}\mathbf{b}
+$$
+被称作TD不动点。
+
+可以证明：
+$$
+\overline{\text{VE}}(\mathbf{w}_{\text{TD}}) \le \frac{1}{1-\gamma}\min_{\mathbf{w}}\overline{\text{VE}}(\mathbf{w})
+$$
+<img src="pic/n-step_semi-gradient_TD.png" style="zoom:60%;" />
+
+#### 线性方法的特征构造
+
+##### 多项式基
+
+对于状态$s$，假设其有$k$个分量$s_1,s_2,\dots,s_k$，则每一个$n$阶多项式特征为：
+$$
+x_i(s) = \prod_{j=1}^k s_j^{c_{i,j}}
+$$
+其中，$c_{i,j}$是集合$\{0,1,\dots,n\}$的任意一个整数。共有$(n+1)^k$个不同特征。
+
+##### 傅里叶基
+
+对于单维：
+$$
+x_i(s) = \cos(i\pi s),s\in[0,1]
+$$
+其中，$i=0,\dots,n$. 对于多维情况，可以得到：
+$$
+x_i(\mathbf{s}) = \cos(\pi\mathbf{s}^\top\mathbf{c}^i)
+$$
+其中，$\mathbf{c}^i = (c_1^i,\dots,c_k^i)^\top$，$c_j^i \in \{0,1,\dots,n\}$，$j=1,\dots,k$，$i=1,\dots,(n+1)^k$
+
+建议的参数设置（对于$x_i$）：
+$$
+\alpha_i = \frac{\alpha}{(c_1^i)^2+\dots+(c_k^i)^2}
+$$
+
+##### 粗编码
+
+> If the state is inside a circle, then the corresponding feature has the value 1 and is said to be present; otherwise the feature is 0 and is said to be absent.
+
+<img src="pic/coarse_coding.png" style="zoom:60%;" />
+
+##### 瓦片编码
+
+> In tile coding the receptive fields of the features are grouped into partitions of the state space. Each such partition is called a tiling, and each element of the partition is called a tile.
+
+##### 径向基函数
+
+$$
+x_i(s) \doteq \exp(-\frac{||s-c_i||^2}{2\sigma_i^2})
+$$
+
+#### 手动选择步长参数
+
