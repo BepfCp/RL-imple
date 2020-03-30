@@ -496,7 +496,7 @@ G_{t:h} \doteq R_{t+1}+\gamma(\sigma_{t+1}\rho_{t+1}+(1-\sigma_{t+1})\pi(A_{t+1}
 $$
 <img src="pic/off-policy_n-step_q-sigma.png" style="zoom:60%;" />
 
-***小节***：
+***小结***：
 
 <img src="pic/different_backup_s_q.png" style="zoom:60%;" />
 
@@ -617,7 +617,7 @@ $$
 
 <img src="pic/semi-gradient_TD0.png" style="zoom:60%;" />
 
-状态聚合（state aggregation）：
+***状态聚合***（state aggregation）：
 
 > **State aggregation** is a simple form of generalizing function approximation in which states are grouped together, with one estimated value (one component of the weight vector $\mathbf{w}$ ) for each group. The value of a state is estimated as its group’s component, and when the state is updated, that component alone is updated. State aggregation is a special case of SGD$(\ref{sgd})$ in which the gradient, $\nabla\hat{v}(S_t,\mathbf{w}_t)$, is 1 for $S_t$ ’s group’s component and 0 for the other components.
 
@@ -625,10 +625,14 @@ $$
 
 > In the linear case there is only one optimum (or, in degenerate cases, one set of equally good optima), and thus any method that is guaranteed to converge to or near a local optimum is automatically guaranteed to converge to or near the global optimum.
 
+对于每一个状态$s$，有：
+$$
+\mathbf{x}(s) \doteq (x_1(s),x_2(s),\dots,x_d(s))^\top
+$$
+权重线性化的含义是：
 $$
 \hat{v}(s,\mathbf{w}) \doteq \mathbf{w}^\top \mathbf{x}(s) \doteq \sum_{i=1}^dw_ix_i(s)
 $$
-
 从而更新规则为：
 $$
 \begin{equation}
@@ -705,3 +709,71 @@ $$
 
 #### 手动选择步长参数
 
+> The classical choice $\alpha_t = 1/t$, which produces sample averages in tabular MC methods, is not appropriate for TD methods, for nonstationary problems, or for any method using function approximation.
+
+对于SGD，一个可以使用的规则是：
+$$
+\alpha \doteq (\tau\mathbb{E}[\mathbf{x}^\top\mathbf{x}])^{-1}
+$$
+
+#### 非线性函数逼近：人工神经网络
+
+<img src="pic/ANN.png" style="zoom:60%;" />
+
++ activation function
++ backpropagation
++ overfitting
++ cross validation，regularization，weight sharing
++ drop out，deep belief networks，batch normalization，deep residual learning
++ deep convolutional network，feature map，subsample
+
+#### 最小二乘时序差分
+
+<img src="pic/LSTD.png" style="zoom:60%;" />
+
+#### 基于记忆的函数逼近
+
+> Memory-based function approximation methods are very different. They simply save training examples in memory as they arrive (or at least save a subset of the examples) without updating any parameters. Then, whenever a query state’s value estimate is needed, a set of examples is retrieved from memory and used to compute a value estimate for the query state. This approach is sometimes called lazy learning because processing training examples is postponed until the system is queried to provide an output.
+
+#### 基于核函数的函数逼近
+
+> Kernel functions numerically express how relevant knowledge about any state is to any other state.
+
+$$
+k:\mathcal{S}×\mathcal{S} \rightarrow \mathbb{R}
+$$
+
+> ***Kernel regression*** is the memory-based method that computes a kernel weighted average of the targets of all examples stored in memory, assigning the result to the query state.
+
+假设$\mathcal{D}$是被存储的样本的集合，$g(s')$是状态$s'$的目标，则：
+$$
+\hat{v}(s,\mathcal{D}) = \sum_{s' \in \mathcal{D}}k(s,s')g(s')
+$$
+一个可选的kernel是：
+$$
+k(s,s')=\mathbf{x}(s)^\top\mathbf{x}(s')
+$$
+
+#### 深入了解同轨策略学习：兴趣与强调
+
+兴趣（interest）：反映了我们对于这个状态值的在意程度，$I_t$
+
+强调（emphasis）：反映了我们对于某次更新的在意程度，$M_t$
+$$
+\mathbf{w}_{t+n} \doteq \mathbf{w}_{t+n-1}+\alpha M_t[G_{t:t+n}-\hat{v}(S_t,\mathbf{w}_{t+n-1})]\nabla \hat{v}(S_t,\mathbf{w}_{t+n-1}),\quad0 \le t < T
+$$
+其中：
+$$
+M_t = I_t+\gamma^nM_{t-n},\quad0 \le t <T
+$$
+当$t<0$时，$M_t=0$；对于MC，$M_t=I_t$
+
+## 基于函数逼近的同轨策略控制
+
+#### 分幕式半梯度控制
+
+更新规则：
+$$
+\mathbf{w}_{t+1} \doteq \mathbf{w}_t + \alpha[U_t-\hat{q}(S_t,A_t,\mathbf{w}_t)]\nabla \hat{q}(S_t,A_t,\mathbf{w}_t)
+$$
+<img src="pic/Episodic_Semi-gradient_Sarsa.png" style="zoom:60%;" />

@@ -5,6 +5,7 @@
 + [动态规划](https://github.com/BepfCp/RL-imple/tree/master/src/DP)，包括：策略评估、策略改进、策略迭代、截断策略迭代以及价值迭代
 + [蒙特卡洛方法](https://github.com/BepfCp/RL-imple/tree/master/src/MC)，包括：MC-预测和Constant-$\alpha$ MC-Control
 + [时序差分学习](https://github.com/BepfCp/RL-imple/tree/master/src/TD)，包括：Sarsa，Q-learning以及Expected Sarsa
++ Tile-Coding，包括：Tile-Coding+Q-learning
 
 ### 参考文献
 
