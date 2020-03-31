@@ -777,3 +777,77 @@ $$
 \mathbf{w}_{t+1} \doteq \mathbf{w}_t + \alpha[U_t-\hat{q}(S_t,A_t,\mathbf{w}_t)]\nabla \hat{q}(S_t,A_t,\mathbf{w}_t)
 $$
 <img src="pic/Episodic_Semi-gradient_Sarsa.png" style="zoom:60%;" />
+
+#### 半梯度 $n$-step Sarsa
+
+令：
+$$
+G_{t:t+n} \doteq R_{t+1}+\gamma R_{t+2}+\dots+\gamma^{n-1}R_{t+n}+\gamma^n \hat{q}_{t+n-1}(S_{t+n},A_{t+n},\mathbf{w}_{t+n-1}),\quad t+n < T
+$$
+从而更新规则为：
+$$
+\mathbf{w}_{t+n} \doteq \mathbf{w}_{t+n-1} + \alpha[G_{t:t+n}-\hat{q}(S_t,A_t,\mathbf{w}_{t+n-1})]\nabla \hat{q}(S_t,A_t,\mathbf{w}_{t+n-1})
+$$
+<img src="pic/Episodic_semi-gradient_n-step_Sarsa.png" style="zoom:60%;" />
+
+#### 平均回报：持续性任务中的新问题设定
+
+定义平均回报$r(\pi)$（评估策略好坏的指标）：
+$$
+\begin{equation}
+\begin{aligned}
+r(\pi) &\doteq \lim_{h \to \infin}\frac{1}{h}\sum_{t=1}^h\mathbb{E}[R_t|S_0,A_{0:t-1} \sim \pi] \\
+&= \lim_{t \to \infin}\mathbb{E}[R_t|S_0,A_{0:t-1} \sim \pi] \\
+&= \sum_s\mu_\pi(s)\sum_a\pi(a|s)\sum_{s',r}p(s',r|s,a)r
+\end{aligned}
+\end{equation}
+$$
+其中：
+$$
+\mu_\pi(s) \doteq \lim_{t \to \infin}\Pr\{S_t=s|A_{0:t-1} \sim \pi\}
+$$
+与$S_0$无关（ergodicity）
+
+> It means that where the MDP starts or any early decision made by the agent can have only a
+> temporary effect; in the long run the expectation of being in a state depends only on the policy and the MDP transition probabilities.
+
+***differential return***:
+$$
+G_t \doteq R_{t+1}-r(\pi)+R_{t+2}-r(\pi)+R_{t+3}-r(\pi)+\dots
+$$
+***differential value functions***:
+$$
+v_\pi(s) \doteq \mathbb{E}_\pi[G_t|S_t=s]\\
+q_\pi(s,a) \doteq \mathbb{E}_\pi[G_t|S_t=s,A_t=a]
+$$
+从而相应的Bellman方程为：
+$$
+v_\pi(s) \doteq \sum_a\pi(a|s)\sum_{s',r}p(s',r|s,a)[r-r(\pi)+v_\pi(s')]\\
+q_\pi(s,a) \sum_{s',r}p(s',r|s,a)[r-r(\pi)+\sum_{a'}\pi(a'|s')q_\pi(s',a')]\\
+v_*(s) \doteq \max_a\sum_{s',r}p(s',r|s,a)[r-\max_\pi r(\pi)+v_*(s')]\\
+q_\pi(s,a) \sum_{s',r}p(s',r|s,a)[r-\max_\pi r(\pi)+\max_{a'}q_*(s',a')]
+$$
+TD 误差为：
+$$
+\delta_t \doteq R_{t+1}-\bar{R}_{t+1}+\hat{v}(S_{t+1},\mathbf{w}_t)- \hat{v}(S_{t},\mathbf{w}_t) \\
+\delta_t \doteq R_{t+1}-\bar{R}_{t+1}+\hat{q}(S_{t+1},A_{t+1},\mathbf{w}_t)- \hat{v}(S_{t},A_{t},\mathbf{w}_t)
+$$
+其中$\bar{R}_t$是$r(\pi)$在时间$t$时的估计值。
+
+<img src="pic/Differential_semi-gradient_Sarsa.png" style="zoom:60%;" />
+
+#### 弃用折扣
+
+> It is shown that if we optimized discounted value over the on-policy distribution, then the e↵ect would be identical to optimizing undiscounted average reward.
+
+#### 差分半梯度 $n$-step Sarsa
+
+$$
+G_{t:t+n} \doteq R_{t+1}-\bar{R}_{t+1}+R_{t+2}-\bar{R}_{t+2}+\dots+R_{t+n}-\bar{R}_{t+n}+\hat{q}(S_{t+n},A_{t+n},\mathbf{w}_{t+n-1})
+$$
+
+$$
+\delta_t \doteq G_{t:t+n}-\hat{q}(S_t,A_t,\mathbf{w})
+$$
+
+<img src="pic/differential_semi-gradient_n-step_Sarsa.png" style="zoom:60%;" />
