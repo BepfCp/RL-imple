@@ -782,7 +782,7 @@ $$
 
 令：
 $$
-G_{t:t+n} \doteq R_{t+1}+\gamma R_{t+2}+\dots+\gamma^{n-1}R_{t+n}+\gamma^n \hat{q}_{t+n-1}(S_{t+n},A_{t+n},\mathbf{w}_{t+n-1}),\quad t+n < T
+G_{t:t+n} \doteq R_{t+1}+\gamma R_{t+2}+\dots+\gamma^{n-1}R_{t+n}+\gamma^n \hat{q}_{t+n-1}(S_{t+n},A_{t+n},\mathbf{w}_{t+n-1}),\quad t+n < T
 $$
 从而更新规则为：
 $$
@@ -851,3 +851,166 @@ $$
 $$
 
 <img src="pic/differential_semi-gradient_n-step_Sarsa.png" style="zoom:60%;" />
+
+## 基于函数逼近的离轨策略方法
+
+#### 半梯度方法
+
+$\underline{\text{TD(0) for value estimation}}$：
+$$
+\mathbf{w}_{t+1} \doteq \mathbf{w}_t + \alpha\rho_t\delta_t\nabla\hat{v}(S_t,\mathbf{w}_t)
+$$
+其中：
+$$
+\begin{equation}
+\delta_t \doteq R_{t+1}+\gamma \hat{v}(S_{t+1},\mathbf{w}_t)-\hat{v}(S_t,\mathbf{w}_t) \tag{episodic}
+\end{equation}
+$$
+
+$$
+\delta_t \doteq R_{t+1}-\bar{R}_t+\gamma \hat{v}(S_{t+1},\mathbf{w}_t)-\hat{v}(S_t,\mathbf{w}_t) \tag{continuing}
+$$
+
+$\underline{\text{one-step semi-gradient Expected Sarsa}}$：
+$$
+\mathbf{w}_{t+1} \doteq \mathbf{w}_t + \alpha\delta_t\nabla\hat{q}(S_t,A_t,\mathbf{w}_t)
+$$
+其中：
+$$
+\begin{equation}
+\delta_t \doteq R_{t+1}+\gamma \sum_a\pi(a|S_{t+1})\hat{q}(S_{t+1},a,\mathbf{w}_t)-\hat{q}(S_t,A_t,\mathbf{w}_t) \tag{episodic}
+\end{equation}
+$$
+
+$$
+\begin{equation}
+\delta_t \doteq R_{t+1}-\bar{R}_t+\gamma \sum_a\pi(a|S_{t+1})\hat{q}(S_{t+1},a,\mathbf{w}_t)-\hat{q}(S_t,A_t,\mathbf{w}_t) \tag{continuing}
+\end{equation}
+$$
+
+$\underline{\text{n-step semi-gradient Expected Sarsa}}$：
+$$
+\mathbf{w}_{t+n} \doteq \mathbf{w}_{t+n-1} + \alpha\rho_{t+1}\dots\rho_{t+n-1}[G_{t:t+n}-\hat{q}(S_t,A_t,\mathbf{w}_{t+n-1})]\nabla\hat{q}(S_t,A_t,\mathbf{w}_{t+n-1})
+$$
+其中：
+$$
+\begin{equation}
+G_{t:t+n} \doteq R_{t+1}+\dots+\gamma^{n-1}R_{t+n}+\gamma^n\hat{q}(S_{t+n},A_{t+n},\mathbf{w}_{t+n-1})\tag{episodic}
+\end{equation}
+$$
+
+$$
+\begin{equation}
+G_{t:t+n} \doteq R_{t+1}-\bar{R}_t+\dots+R_{t+n}-\bar{R}_{t+n-1}+\gamma^n\hat{q}(S_{t+n},A_{t+n},\mathbf{w}_{t+n-1})\tag{continuing}
+\end{equation}
+$$
+
+$\underline{\text{n-step tree-backup algorithm}}$：
+$$
+\mathbf{w}_{t+n} \doteq \mathbf{w}_{t+n-1}+\alpha[G_{t:t+n}-\hat{q}(S_t,A_t,\mathbf{w}_{t+n-1})]\nabla\hat{q}(S_t,A_t,\mathbf{w}_{t+n-1}) 
+$$
+其中：
+$$
+G_{t:t+n} \doteq \hat{q}(S_t,A_t,\mathbf{w}_{t-1})+\sum_{k=t}^{t+n-1}\delta_k\prod_{i=t+1}^k\gamma\pi(A_i|S_i)
+$$
+$\delta_t$定义方式跟Expected Sarsa相同。
+
+#### 死亡三要素
+
+1. 函数逼近
+2. 自举
+3. 离轨策略
+
+> Note that the danger is not due to control or to generalized policy iteration. Those cases are more complex to analyze, but the instability arises in the simpler prediction case whenever it includes all three elements of the deadly triad. The danger is also not due to learning or to uncertainties about the environment, because it occurs just as strongly in planning methods, such as dynamic programming, in which the environment is completely known.
+
+#### 线性价值函数的几何性质
+
+定义价值函数的距离度量：
+$$
+||v||^2_\mu \doteq \sum_{s\in\mathcal{S}}\mu(s)v(s)^2
+$$
+对于任意一个价值函数$v$，定义投影算子$\Pi$:
+$$
+\Pi_v \doteq v_{\mathbf{w}} \quad \text{where} \quad \mathbf{w}=\arg\min_{\mathbf{w}\in \mathbb{R}^d}||v-v_\mathbf{w}||^2_\mu
+$$
+Bellman误差：
+$$
+\begin{equation}
+\begin{aligned}
+\bar{\delta}_\mathbf{w}(s) &\doteq (\sum_a\pi(a|s)\sum_{s',r}p(s',r|s,a)[r+\gamma v_\mathbf{w}(s')])-v_\mathbf{w}(s)\\
+&=\mathbb{E}[R_{t+1}+\gamma v_\mathbf{w}(S_{t+1})-v_\mathbf{w}(S_t)|S_t=s,A_t\sim\pi]
+\end{aligned}
+\end{equation}
+$$
+均方贝尔曼误差：
+$$
+\overline{\text{BE}}(\mathbf{w}) \doteq ||\bar{\delta}_\mathbf{w}||^2_\mu
+$$
+贝尔曼算子：
+$$
+(B_\pi v)(s) \doteq \sum_a\pi(a|s)\sum_{s',r}p(s',r|s,a)[r+\gamma v(s')]
+$$
+均方投影贝尔曼误差：
+$$
+\overline{\text{PBE}}(\mathbf{w}) \doteq ||\Pi\bar{\delta}_\mathbf{w}||^2_\mu
+$$
+
+#### 对贝尔曼误差做梯度下降
+
+均方TD误差：
+$$
+\begin{equation}
+\begin{aligned}
+\overline{\text{TDE}}(\mathbf{w}) &= \sum_{s\in\mathcal{S}}\mu(s)\mathbb{E}[\delta^2_t|S_t=s,A_t \sim \pi]\\
+&= \sum_{s\in \mathcal{S}}\mu(s)\mathbb{E}[\rho_t\delta_t^2|S_t=s,A_t \sim b]\\
+&=\mathbb{E}_b[\rho_t\delta^2_t] 
+\end{aligned}
+\end{equation}
+$$
+其中：
+$$
+\delta_t = R_{t+1}+\gamma \hat{v}(S_{t+1},\mathbf{w}_t)-\hat{v}(S_t,\mathbf{w}_t)
+$$
+Naive residual-gradient algorithm（朴素残差梯度算法）：
+$$
+\begin{equation}
+\begin{aligned}
+\mathbf{w}_{t+1} &= \mathbf{w}_t -\frac{1}{2}\alpha\nabla(\rho_t\delta_t^2)\\
+&= \mathbf{w}_t - \alpha\rho_t\delta_t\nabla\delta_t \\
+&= \mathbf{w}_t + \alpha\rho_t\delta_t(\nabla\hat{v}(S_t,\mathbf{w}_t)-\gamma\nabla\hat{v}(S_{t+1},\mathbf{w}_t)) \\
+\end{aligned}
+\end{equation}
+$$
+Residual-gradient algorithm（残差梯度算法）：
+$$
+\begin{equation}
+\begin{aligned}
+\mathbf{w}_{t+1} &= \mathbf{w}_t -\frac{1}{2}\alpha\nabla(\mathbb{E}_\pi[\delta_t]^2)\\
+&= \mathbf{w}_t -\frac{1}{2}\alpha\nabla(\mathbb{E}_b[\rho_t\delta_t]^2)\\
+&= \mathbf{w}_t - \alpha\mathbb{E}_b[\rho_t\delta_t]\mathbb{E}_b[\rho_t\nabla\delta_t]  \\
+&= \mathbf{w}_t + \alpha\Big[\mathbb{E}_b[\rho_t(R_{t+1}+\gamma \hat{v}(S_{t+1},\mathbf{w}_t))]-\hat{v}(S_t,\mathbf{w})\Big]\Big[\nabla\hat{v}(S_t,\mathbf{w})-\gamma\mathbb{E}_b[\rho_t\nabla\hat{v}(S_{t+1},\mathbf{w}_t)]\Big]\\
+\end{aligned}
+\end{equation}
+$$
+对于残差梯度算法，由于$S_{t+1}$出现在两个相乘的期望中，因此，采样方法为：
+
+> One is in the case of deterministic environments. If the transition to the next state is deterministic, then
+> the two samples will necessarily be the same, and the naive algorithm is valid. The other way is to obtain two independent samples of the next state, $S_{t+1}$ , from $S_t$ , one for the first expectation and another for the second expectation. In real interaction with an environment, this would not seem possible, but when interacting with a simulated environment, it is. One simply rolls back to the previous state and obtains an alternate next state before proceeding forward from the first next state.
+
+#### 贝尔曼误差是不可学习的
+
+> Here we use the term in a more basic way, to mean learnable at all, with any amount of experience.
+
+均方回报误差：
+$$
+\begin{equation}
+\begin{aligned}
+\overline{\text{RE}} &= \mathbb{E}\Big[(G_t-\hat{v}(S_t,\mathbf{w}_t))^2\Big]\\
+&= \overline{\text{VE}}(\mathbf{w})+\mathbb{E}[(G_t-v_\pi(S_t))^2]
+\end{aligned}
+\end{equation}
+$$
+<img src="pic/learnable.png" style="zoom:60%;" />
+
+#### 梯度TD方法
+
