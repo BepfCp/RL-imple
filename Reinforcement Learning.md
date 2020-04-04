@@ -1014,3 +1014,379 @@ $$
 
 #### 梯度TD方法
 
+ 定义变量$\mathbf{v}$：
+$$
+\mathbf{v} \approx \mathbb{E}[\mathbf{x}_t\mathbf{x}_t^\top]^{-1}\mathbb{E}[\rho_t\delta_t\mathbf{x}_t]
+$$
+根据LMS规则可以得到：
+$$
+\mathbf{v}_{t+1} \doteq \mathbf{v}_t + \beta \rho_t(\delta_t-\mathbf{v}_t^\top\mathbf{x}_t)\mathbf{x}_t
+$$
+从而我们得到如下GTD2算法：
+$$
+\begin{equation}
+\begin{aligned}
+\mathbf{w}_{t+1} &= \mathbf{w}_t-\frac{1}{2}\alpha\nabla\overline{\text{PBE}}(\mathbf{w}_t)\\
+&= \mathbf{w}_t - \frac{1}{2}\alpha2\mathbb{E}[\rho_t(\gamma\mathbf{x}_{t+1}-\mathbf{x}_{t})\mathbf{x}_{t}^\top]\mathbb{E}[\mathbf{x}_{t}\mathbf{x}_{t}^\top]^{-1}\mathbb{E}[\rho_t\delta_t\mathbf{x}_t]\\
+&= \mathbf{w}_t + \alpha\mathbb{E}[\rho_t(\mathbf{x}_{t}-\gamma\mathbf{x}_{t+1})\mathbf{x}_{t}^\top]\mathbb{E}[\mathbf{x}_{t}\mathbf{x}_{t}^\top]^{-1}\mathbb{E}[\rho_t\delta_t\mathbf{x}_t]\\
+&\approx \mathbf{w}_t + \alpha\mathbb{E}[\rho_t(\mathbf{x}_{t}-\gamma\mathbf{x}_{t+1})\mathbf{x}_{t}^\top]\mathbb{v}_t\\
+&\approx \mathbf{w}_t + \alpha\rho_t(\mathbf{x}_{t}-\gamma\mathbf{x}_{t+1})\mathbf{x}_{t}^\top\mathbb{v}_t
+\end{aligned}
+\end{equation}
+$$
+进一步，我们可以推导如下TDC算法：
+$$
+\begin{equation}
+\begin{aligned}
+\mathbf{w}_{t+1}
+&= \mathbf{w}_t + \alpha\mathbb{E}[\rho_t(\mathbf{x}_{t}-\gamma\mathbf{x}_{t+1})\mathbf{x}_{t}^\top]\mathbb{E}
+[\mathbf{x}_{t}\mathbf{x}_{t}^\top]^{-1}\mathbb{E}[\rho_t\delta_t\mathbf{x}_t]\\
+&= \mathbf{w}_t + \alpha(\mathbb{E}[\rho_t\mathbf{x}_{t}\mathbf{x}_{t}^\top]-\gamma\mathbb{E}[\rho_t\mathbf{x}_{t+1}\mathbf{x}_{t}^\top])\mathbb{E}
+[\mathbf{x}_{t}\mathbf{x}_{t}^\top]^{-1}\mathbb{E}[\rho_t\delta_t\mathbf{x}_t]\\
+&= \mathbf{w}_t + \alpha(\mathbb{E}[\mathbf{x}_{t}\mathbf{x}_{t}^\top]-\gamma\mathbb{E}[\rho_t\mathbf{x}_{t+1}\mathbf{x}_{t}^\top])\mathbb{E}
+[\mathbf{x}_{t}\mathbf{x}_{t}^\top]^{-1}\mathbb{E}[\rho_t\delta_t\mathbf{x}_t]\\
+&= \mathbf{w}_t + \alpha\Big(\mathbb{E}[\rho_t\delta_t\mathbf{x}_t]-\gamma\mathbb{E}[\rho_t\mathbf{x}_{t+1}\mathbf{x}_{t}^\top]\mathbb{E}
+[\mathbf{x}_{t}\mathbf{x}_{t}^\top]^{-1}\mathbb{E}[\rho_t\delta_t\mathbf{x}_t]\Big)\\
+&\approx \mathbf{w}_t + \alpha(\mathbb{E}[\rho_t\delta_t\mathbf{x}_t]-\gamma\mathbb{E}[\rho_t\mathbf{x}_{t+1}\mathbf{x}_{t}^\top]\mathbf{v}_t)\\
+&\approx \mathbf{w}_t + \alpha\rho_t(\delta_t\mathbf{x}_t-\gamma\mathbf{x}_{t+1}\mathbf{x}_{t}^\top\mathbb{v}_t)
+\end{aligned}
+\end{equation}
+$$
+
+#### Emphatic-TD 方法
+
+> Reweight the states, emphasizing some and de-emphasizing others, so as to return the distribution of updates to the on-policy distribution.
+
+$$
+\delta_t = R_{t+1}+\gamma \hat{v}(S_{t+1},\mathbf{w}_t)-\hat{v}(S_t,\mathbf{w}_t)
+$$
+
+$$
+\mathbf{w}_{t+1} = \mathbf{w}_t+\alpha M_t\rho_t\delta_t\nabla\hat{v}(S_t,\mathbf{w}_t)
+$$
+
+$$
+M_t=\gamma\rho_{t-1}M_{t-1}+I_t
+$$
+
+## 资格迹
+
+***forward view***: updating values based on the next $n$ rewards and state $n$ steps in the future.
+
+<img src="pic/forward_view.png" style="zoom:60%;" />
+
+***backward view***: looking backward to recently visited states using an eligibility trace.
+
+<img src="pic/backward_view.png" style="zoom:60%;" />
+
+####  $\lambda$-return
+
+$$
+\begin{equation}
+G_{t:t+n} \doteq R_{t+1}+\dots+\gamma^{n-1}R_{t+n}+\gamma^n\hat{v}(S_{t+n},\mathbf{w}_{t+n-1})
+\end{equation}
+$$
+
+
+$$
+G_t^\lambda \doteq (1-\lambda)\sum_{n=1}^\infin\lambda^{n-1}G_{t:t+n}
+$$
+<img src="pic/backup_TD_lambda.png" style="zoom:60%;" />
+
+对于有终止的情形：
+$$
+G_t^\lambda \doteq (1-\lambda)\sum_{n=1}^{T-t-1}\lambda^{n-1}G_{t:t+n}+\lambda^{T-t-1}G_t
+$$
+*offline $\lambda$-return algorithm*:
+$$
+\mathbf{w}_{t+1} \doteq \mathbf{w}_t + \alpha[G_t^\lambda-\hat{v}(S_t,\mathbf{w}_t)]\nabla\hat{v}(S_t,\mathbf{w}_t), t=0,\dots,T-1
+$$
+
+#### TD($\lambda$)
+
+> First it updates the weight vector on every step of an episode rather than only at the end, and thus its estimates may be better sooner. Second, its computations are equally distributed in time rather than all at the end of the episode. And third, it can be applied to continuing problems rather than just to episodic problems.
+
+定义资格迹：
+$$
+\mathbf{z}_{-1} \doteq 0\\
+\mathbf{z}_t \doteq \gamma\lambda \mathbf{z}_{t-1}+\nabla\hat{v}(S_t,\mathbf{w}_t)
+$$
+<img src="pic/semi-gradient_TD_lambda.png" style="zoom:60%;" />
+
+经证明，误差限为：
+$$
+\overline{\text{VE}}(\mathbf{w}_\infin) \le \frac{1-\gamma\lambda}{1-\gamma}\min_\mathbf{w}\overline{\text{VE}}(\mathbf{w})
+$$
+
+#### $n$-step 截断 $\lambda$-return 方法
+
+定义截断$\lambda$-return如下：
+$$
+G_{t:h}^\lambda \doteq (1-\lambda)\sum_{n=1}^{h-t-1}\lambda^{n-1}G_{t:t+n}+\lambda^{h-t-1}G_{t:h}\quad0\le t < h \le T
+$$
+<img src="pic/backup_n-step_truncated_TD_lambda.png" style="zoom:60%;" />
+
+#### 重做更新：在线$\lambda$-return算法
+
+> On each time step as you gather a new increment of data, you go back and redo all the updates since the beginning of the current episode.
+
+$$
+\mathbf{w}_{t+1}^h \doteq \mathbf{w}_t^h + \alpha[G_{t:h}^\lambda-\hat{v}(S_t,\mathbf{w}_t^h)]\nabla\hat{v}(S_t,\mathbf{w}_t^h)\quad 0 \le t < h \le T
+$$
+
+#### 真实的在线TD($\lambda$)
+
+更新规则：
+$$
+\mathbf{w}_{t+1}\doteq \mathbf{w}_t + \alpha\delta_t\mathbf{z}_t+\alpha(\mathbf{w}_t^\top\mathbf{x}_t-\mathbf{w}_{t-1}^\top\mathbf{x}_{t})(\mathbf{z}_t-\mathbf{x}_t)
+$$
+其中：
+$$
+\mathbf{z}_t \doteq \gamma\lambda\mathbf{z}_{t-1}+(1-\alpha\gamma\lambda\mathbf{z}_{t-1}^\top\mathbf{x}_t)\mathbf{x}_t
+$$
+<img src="pic/True_online_TD_lambda.png" style="zoom:60%;" />
+
+#### Sarsa($\lambda$)
+
+估计动作价值函数的TD($\lambda$):
+$$
+\begin{equation}
+G_{t:t+n} \doteq R_{t+1}+\dots+\gamma^{n-1}R_{t+n}+\gamma^n\hat{q}(S_{t+n},A_{t+n},\mathbf{w}_{t+n-1}),\quad t+n < T
+\end{equation}
+$$
+
+$$
+\mathbf{w}_{t+1} \doteq \mathbf{w}_t + \alpha[G_t^\lambda-\hat{q}(S_t,A_t,\mathbf{w}_t)]\nabla\hat{q}(S_t,A_t,\mathbf{w}_t), t=0,\dots,T-1
+$$
+
+Sarsa($\lambda$):
+$$
+\mathbf{w}_{t+1} \doteq \mathbf{w}_t+\alpha\delta_t\mathbf{z}_t
+$$
+其中：
+$$
+\begin{equation}
+\delta_t \doteq R_{t+1}+\gamma \hat{q}(S_{t+1},A_{t+1},\mathbf{w}_t)-\hat{q}(S_t,A_t,\mathbf{w}_t)
+\end{equation}
+$$
+
+$$
+\mathbf{z}_{-1} \doteq 0\\
+\mathbf{z}_t \doteq \gamma\lambda \mathbf{z}_{t-1}+\nabla\hat{q}(S_t,A_t,\mathbf{w}_t),\quad 0 \le t\le T
+$$
+
+<img src="pic/backup_sarsa_lambda.png" style="zoom:60%;" />
+
+<img src="pic/sarsa_lambda_binary.png" style="zoom:60%;" />
+
+<img src="pic/True_online_Sarsa_lambda.png" style="zoom:60%;" />
+
+#### 变量$\lambda$和$\gamma$
+
+ 定义$\lambda_t$和$\gamma_t$:
+$$
+\lambda_t = \lambda(S_t,A_t),\gamma_t = \gamma(S_t)
+$$
+从而：
+$$
+\begin{equation}
+\begin{aligned}
+G_t &\doteq R_{t+1}+\gamma_{t+1}G_{t+1}\\
+&= R_{t+1}+\gamma_{t+1}R_{t+2}+\gamma_{t+1}\gamma_{t+2}R_{t+3}+\dots\\
+&= \sum_{k=t}^\infin\Big(\prod_{i=t+1}^k\gamma_i\Big)R_{k+1}
+\end{aligned}
+\end{equation}
+$$
+
+#### Watkins’s Q($\lambda$)和Tree-Backup($\lambda$)
+
+> Several methods have been proposed over the years to extend Q-learning to eligibility traces. The original is Watkins’s Q($\lambda$), which decays its eligibility traces in the usual way as long as a greedy action was taken, then cuts the traces to zero after the first non-greedy action.
+
+<img src="pic/watkins_Q_lambda.png" style="zoom:60%;" />
+
+TB($\lambda$):
+$$
+\mathbf{z}_t \doteq \gamma_t\lambda_t\pi(A_t|S_t)\mathbf{z}_{t-1}+\nabla\hat{q}(S_t,A_t,\mathbf{w}_t)
+$$
+<img src="pic/backup_treeBackup_lambda.png" style="zoom:60%;" />
+
+#### 采用资格迹保障离轨策略方法的稳定性
+
+GTD($\lambda$):
+$$
+\mathbf{w}_{t+1} \doteq \mathbf{w}_t + \alpha\delta^s_t\mathbf{z}_t-\alpha\gamma_{t+1}(1-\lambda_{t+1})(\mathbf{z}_t^\top\mathbf{v}_t)\mathbf{x}_{t+1}
+$$
+其中，
+$$
+\mathbf{z}_t \doteq \rho_t(\gamma_t\lambda_t\mathbf{z}_{t-1}+\nabla\hat{v}(S_t,\mathbf{w}_t))
+$$
+
+$$
+\mathbf{v}_{t+1}\doteq \mathbf{v}_t+\beta\delta_t^s\mathbf{z}_t-\beta(\mathbf{v}_t^\top\mathbf{x}_t)\mathbf{x}_t
+$$
+
+GQ($\lambda$):
+$$
+\mathbf{w}_{t+1} \doteq \mathbf{w}_t + \alpha\delta^a_t\mathbf{z}_t-\alpha\gamma_{t+1}(1-\lambda_{t+1})(\mathbf{z}_t^\top\mathbf{v}_t)\mathbf{\bar{x}}_{t+1}
+$$
+其中，
+$$
+\mathbf{\bar{x}}_t \doteq \sum_a\pi(a|S_t)\mathbf{x}(S_t,a)
+$$
+
+$$
+\delta_t^a \doteq R_{t+1}+\gamma_{t+1}\mathbf{w}_t^\top\mathbf{\bar{x}}_{t+1}-\mathbf{w}_t^\top\mathbf{x}_{t}
+$$
+
+$$
+\mathbf{z}_t \doteq \gamma_t\lambda_t\rho_t\mathbf{z}_{t-1}+\nabla\hat{q}(S_t,A_t,\mathbf{w}_t)
+$$
+
+HTD($\lambda$):
+$$
+\begin{equation}
+\begin{aligned}
+\mathbf{w}_{t+1} &\doteq \mathbf{w}_t + \alpha\delta^s_t\mathbf{z}_t+\alpha\big((\mathbf{z}_t-\mathbf{z}_t^b)^\top\mathbf{v}_t\big)(\mathbf{x}_{t}-\gamma_{t+1}\mathbf{x}_{t+1})\\
+\mathbf{v}_{t+1} &\doteq \mathbf{v}_{t}+\beta\delta^s_t\mathbf{z}_t-\beta\Big({\mathbf{z}_t^b}^\top\mathbf{v}_t\Big)(\mathbf{x}_{t}-\gamma_{t+1}\mathbf{x}_{t+1}),\quad \text{with }\mathbf{v}_{0}=0\\
+\mathbf{z}_t &\doteq \rho_t(\gamma_{t}\lambda_{t}\mathbf{z}_{t-1}+\mathbf{x}_t),\quad \text{with }\mathbf{z}_{-1} = 0\\
+\mathbf{z}_t^b &\doteq \gamma_{t}\lambda_{t}\mathbf{z}_{t-1}^b+\mathbf{x}_t,\quad \text{with } \mathbf{z}_{-1}^b = 0
+\end{aligned}
+\end{equation}
+$$
+Emphatic TD($\lambda$):
+$$
+\begin{equation}
+\begin{aligned}
+\mathbf{w}_{t+1} &\doteq \mathbf{w}_t + \alpha\delta_t\mathbf{z}_t\\
+\delta_t &\doteq R_{t+1}+\gamma_{t+1}\mathbf{w}_t^\top\mathbf{x}_{t+1}-\mathbf{w}_t^\top\mathbf{x}_{t}\\
+\mathbf{z}_t &\doteq \rho_t(\gamma_{t}\lambda_{t}\mathbf{z}_{t-1}+M_t\mathbf{x}_t),\quad \text{with }\mathbf{z}_{-1} = 0\\
+M_t &\doteq \lambda_tI_t+(1-\lambda_t)F_t\\
+F_t &\doteq \rho_{t-1}\gamma_tF_{t-1}+I_t,\quad \text{with } F_0 \doteq i(S_0)
+\end{aligned}
+\end{equation}
+$$
+
+## 策略梯度方法
+
+> A value function may still be used to learn the policy parameter, but is not required for action selection.
+
+定义策略参数$\theta\in\mathbb{R}^{d'}$，性能度量函数$J(\theta)$，梯度上升算法如下：
+$$
+\theta_{t+1} = \theta_t+\alpha\widehat{\nabla J(\theta_t)}
+$$
+
+> Methods that learn approximations to both policy and value functions are often called actor–critic methods, where ‘actor’ is a reference to the learned policy, and ‘critic’ refers to the learned value function, usually a state-value function.
+
+#### 策略近似及其优点
+
+> In policy gradient methods, the policy can be parameterized in any way, as long as $\pi(a|s,\theta)$ is differentiable with respect to its parameters, that is, as long as $\nabla \pi(a|s,\theta)$  (the column vector of partial derivatives of $\pi(a|s,\theta)$  with respect to the components of $\theta$ ) exists and is finite for all $s\in \mathcal{S},a\in \mathcal{A(s)},\theta \in \mathbb{R}^{d'}$
+
+***soft-max in action preferences:***
+$$
+\pi(a|s,\theta) \doteq \frac{e^{h(s,a,\theta)}}{\sum_b e^{h(s,b,\theta)}}
+$$
+可以选择：
+$$
+h(s,a,\theta) = \theta^\top\mathbf{x}(s,a)
+$$
+
+#### 策略梯度定理
+
+对于分幕式情形，定义性能指标：
+$$
+J(\theta) \doteq v_{\pi_\theta}(s_0)
+$$
+可以证明：
+$$
+\nabla J(\theta) \propto \sum_s\mu(s)\sum_a q_\pi(s,a)\nabla\pi(a|s,\theta)
+$$
+
+#### REINFORCE: MC 策略梯度
+
+$$
+\begin{equation}
+\begin{aligned}
+\nabla J(\theta) &\propto \sum_s\mu(s)\sum_a q_\pi(s,a)\nabla\pi(a|s,\theta)\\
+&= \mathbb{E}_\pi\Big[\sum_aq_\pi(S_t,a)\nabla\pi(a|S_t,\theta)\Big]
+\end{aligned}
+\end{equation}
+$$
+
+all-action 方法：
+$$
+\theta_{t+1} \doteq \theta_t+\alpha\sum_a\hat{q}(S_t,a,\mathbf{w})\nabla\pi(a|S_t,\theta)
+$$
+另一方面，我们有：
+$$
+\begin{equation}
+\begin{aligned}
+\nabla J(\theta) 
+&= \mathbb{E}_\pi\Big[\sum_aq_\pi(S_t,a)\nabla\pi(a|S_t,\theta)\Big]\\
+&= \mathbb{E}_\pi\Big[\sum_a\pi(a|S_t,\theta)q_\pi(S_t,a)\nabla\pi(a|S_t,\theta)/\pi(a|S_t,\theta)\Big]\\
+&= \mathbb{E}_\pi\Big[q_\pi(S_t,A_t)\nabla\pi(A_t|S_t,\theta)/\pi(A_t|S_t,\theta)\Big]\\
+&= \mathbb{E}_\pi\Big[G_t\nabla\pi(A_t|S_t,\theta)/\pi(A_t|S_t,\theta)\Big]\\
+\end{aligned}
+\end{equation}
+$$
+REINFORCE 更新：
+$$
+\theta_{t+1} \doteq \theta_t+\alpha G_t\nabla\pi(A_t|S_t,\theta)/\pi(A_t|S_t,\theta)
+$$
+<img src="pic/REINFORCE-MC.png" style="zoom:60%;" />
+
+#### 带有基线的REINFORCE
+
+> In general, the baseline leaves the expected value of the update unchanged, but it can have a large effect on its variance.
+
+$$
+\theta_{t+1} \doteq \theta_t+\alpha (G_t-b(S_t))\nabla\pi(A_t|S_t,\theta)/\pi(A_t|S_t,\theta)
+$$
+
+> For MDPs the baseline should vary with state. In some states all actions have high values and we need a high baseline to differentiate the higher valued actions from the less highly valued ones; in other states all actions will have low values and a low baseline is appropriate.
+
+<img src="pic/REINFORCE_with_baseline.png" style="zoom:60%;" />
+
+#### Actor-Critic 方法
+
+$$
+\begin{equation}
+\begin{aligned}
+\theta_{t+1} &\doteq \theta_t + \alpha(G_{t:t+1}-\hat{v}(S_t,\mathbf{w}))\frac{\nabla \pi(A_t|S_t,\theta)}{\pi(A_t|S_t,\theta)} \\
+&=\theta_t + \alpha(R_{t+1}+\gamma\hat{v}(S_{t+1},\mathbf{w})-\hat{v}(S_t,\mathbf{w}))\frac{\nabla \pi(A_t|S_t,\theta)}{\pi(A_t|S_t,\theta)} \\
+&= \theta_t + \alpha\delta_t\frac{\nabla \pi(A_t|S_t,\theta)}{\pi(A_t|S_t,\theta)} \\
+\end{aligned}
+\end{equation}
+$$
+
+<img src="pic/one-step_AC.png" style="zoom:60%;" />
+
+<img src="pic/AC_with_ET.png" style="zoom:60%;" />
+
+#### 适用于连续性问题中的策略梯度
+
+$$
+J(\theta) = r(\pi) \doteq \lim_{h \to \infin}\frac{1}{h}\sum_{t=1}^h\mathbb{E}[R_t|S_0,A_{0:t-1} \sim \pi]
+$$
+
+<img src="pic/AC_with_ET_continuing.png" style="zoom:60%;" />
+
+#### 针对连续动作的策略参数化方法
+
+> Policy-based methods offer practical ways of dealing with large actions spaces, even continuous spaces with an infinite number of actions. Instead of computing learned probabilities for each of the many actions, we instead learn statistics of the probability distribution.
+
+$$
+\pi(a|s,\theta)\doteq \frac{1}{\sigma(s,\theta)\sqrt{2\pi}}\exp\Big(-\frac{(a-\mu(s,\theta))^2}{2\sigma(s,\theta)^2}\Big)
+$$
+
+将$\theta$分成两部分：
+$$
+\theta = [\theta_\mu,\theta_\sigma]^\top
+$$
+则可以采用如下方式去近似$\mu$与$\sigma$：
+$$
+\mu(s,\theta) = \theta_\mu^\top\mathbf{x}_\mu(s)
+$$
+
+$$
+\sigma(s,\theta)=\exp(\theta_\sigma^\top\mathbf{x}_\sigma(s))
+$$
