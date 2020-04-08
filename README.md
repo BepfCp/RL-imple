@@ -14,6 +14,5 @@
 ### 致谢
 
 + 感谢Sutton & Barto的书《Reinforcement Leanring：An Introduction》，很经典翔实的一本强化学习入门书。
-
 + 感谢udacity提供的[作业](https://github.com/udacity/deep-reinforcement-learning)，环境已经帮我们搭好了，让我们能集中精力在算法实现上。
-
++ 感谢@[qqiang00](https://github.com/qqiang00)整理的David Silver开设的强化学习课程[UCL Course on RL](https://www.davidsilver.uk/teaching/)笔记，[实践部分](https://github.com/qqiang00/ReinforcemengLearningPractice)很值得动手练习一下。
