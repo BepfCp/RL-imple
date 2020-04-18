@@ -1,3 +1,5 @@
 ref/
 Reinforcement Learning.md
 Reinforcement Learning_rst.md
+src/DQN/pytorch_tutorial/data/
+papers/
