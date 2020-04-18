@@ -6,7 +6,7 @@
 + [蒙特卡洛方法](https://github.com/BepfCp/RL-imple/tree/master/src/MC)，包括：MC-预测和Constant-$\alpha$ MC-Control
 + [时序差分学习](https://github.com/BepfCp/RL-imple/tree/master/src/TD)，包括：Sarsa，Q-learning，Expected Sarsa以及自定义gym环境
 + [Tile-Coding](https://github.com/BepfCp/RL-imple/tree/master/src/Tile-Coding)，包括：Tile-Coding+Q-learning
-+ DQN
++ [DQN](https://github.com/BepfCp/RL-imple/tree/master/src/DQN)，包括Pytorch入门教程，DQN玩CartPole
 
 ### 参考文献
 
